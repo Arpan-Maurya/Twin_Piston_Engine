@@ -1,0 +1,63 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# --- Virtual environment ---
+.venv/
+venv/
+ENV/
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- Environment ---
+.env
+*.env.local
+
+# --- Database ---
+*.db
+*.sqlite3
+
+# --- ML models (large binaries) ---
+models/*.onnx
+models/*.pkl
+models/*.joblib
+
+# --- Data ---
+data/
+
+# --- Coverage ---
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# --- mypy ---
+.mypy_cache/
+
+# --- ruff ---
+.ruff_cache/
+
+# --- pytest ---
+.pytest_cache/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Docker ---
+docker-compose.override.yml
+
+# --- Logs ---
+*.log
+logs/

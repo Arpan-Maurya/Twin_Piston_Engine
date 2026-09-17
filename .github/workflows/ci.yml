@@ -1,0 +1,65 @@
+name: CI/CD Pipeline — Aero Piston Engine Digital Twin
+
+on:
+  push:
+    branches: [ main, master, "feature/*" ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    name: Pytest Suite & Scientific Acceptance (Modules 0–24)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install uv
+        run: curl -sSf https://astral.sh/uv/install.sh | sh
+
+      - name: Install Dependencies
+        run: ~/.cargo/bin/uv sync --extra dev --extra dev
+
+      - name: Run Ruff Lint Checks
+        run: ~/.cargo/bin/uv run ruff check src/ tests/
+
+      - name: Run Pytest Suite (Unit, Integration, Scientific Acceptance)
+        run: ~/.cargo/bin/uv run pytest -v
+
+      - name: Verify Scientific Acceptance Report Generation
+        run: ~/.cargo/bin/uv run python -c "from src.scientific_acceptance.acceptance_report import generate_scientific_acceptance_report; generate_scientific_acceptance_report()"
+
+  package:
+    name: Package Build & Docker Verification
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build Python Package
+        run: |
+          pip install build
+          python -m build
+
+      - name: Build Production Docker Image
+        run: docker build -t piston-engine-digital-twin:latest .
+
+      - name: Run Container & Test Health Smoke Endpoint
+        run: |
+          docker run -d --name test-twin -p 8000:8000 piston-engine-digital-twin:latest
+          sleep 5
+          docker exec test-twin python -c "import httpx; r = httpx.get('http://localhost:8000/api/v1/system/health'); print(r.json()); assert r.status_code == 200"
+          docker stop test-twin
+          docker rm test-twin
